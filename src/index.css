@@ -445,15 +445,16 @@ img, svg { display: block; max-width: 100%; }
   border-radius: 18px;
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow), 0 0 24px -10px var(--accent);
-  /* hidden until the section scrolls into view, then staggered in */
+  /* hidden until the section scrolls into view, then staggered in.
+     The transform is driven live by the parallax loop, so reveal is
+     opacity-only (no transform transition to fight the per-frame writes). */
   opacity: 0;
-  transform: translate(calc(var(--dx, 0) * 40px), calc(var(--dy, 0) * 40px)) scale(0.92);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.6s ease;
   transition-delay: calc(var(--i, 0) * 90ms);
+  will-change: transform, opacity;
 }
 .founders.is-visible .founder {
   opacity: 1;
-  transform: none;
 }
 .founder__avatar {
   width: 48px;
@@ -719,6 +720,7 @@ img, svg { display: block; max-width: 100%; }
     grid-row: auto !important;
     flex: 1 1 calc(50% - 1rem);
     min-width: 150px;
+    transform: none !important; /* no card parallax in the stacked mobile layout */
   }
   .founders__octopus {
     grid-column: 1 / -1 !important;

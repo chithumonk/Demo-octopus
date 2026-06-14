@@ -25,6 +25,7 @@ export default function Founders() {
   const octoRef = useRef(null)
   const glowFarRef = useRef(null)
   const glowNearRef = useRef(null)
+  const cardRefs = useRef([])
 
   // Combine the reveal ref and our own ref onto the same <section>.
   const setSectionRef = (el) => {
@@ -35,17 +36,31 @@ export default function Founders() {
   const onFrame = useStableCallback(({ mx, my }) => {
     const el = sectionRef.current
     if (!el) return
-    const top = el.getBoundingClientRect().top // +ve below viewport, -ve above
+    // How far the section's centre is from the viewport centre, normalised.
+    const rect = el.getBoundingClientRect()
+    const dist = (rect.top + rect.height / 2 - window.innerHeight / 2)
 
     // Octopus drifts vertically on scroll and tilts in 3D toward the pointer.
     if (octoRef.current) {
       octoRef.current.style.transform =
-        `perspective(900px) translate3d(${mx * 26}px, ${top * 0.08 - my * 18}px, 0) ` +
+        `perspective(900px) translate3d(${mx * 26}px, ${dist * 0.06 - my * 18}px, 0) ` +
         `rotateX(${-my * 9}deg) rotateY(${mx * 14}deg)`
     }
-    // Two glow layers move at different speeds = depth behind the scene.
-    if (glowFarRef.current) glowFarRef.current.style.transform = `translateY(${top * 0.16}px)`
-    if (glowNearRef.current) glowNearRef.current.style.transform = `translateY(${top * -0.12}px)`
+    // Glow layers move at different speeds = depth behind the scene.
+    if (glowFarRef.current) glowFarRef.current.style.transform = `translateY(${dist * 0.12}px)`
+    if (glowNearRef.current) glowNearRef.current.style.transform = `translateY(${dist * -0.16}px)`
+
+    // Each founder card drifts based on its position around the octopus:
+    // the ring expands/contracts as you scroll past = clear parallax.
+    const p = dist / window.innerHeight // ~ -1 .. 1 across the section
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return
+      const dx = dirs[i][0]
+      const dy = dirs[i][1]
+      const ox = dx * p * 70 + mx * dx * 10
+      const oy = dy * p * 90 + my * dy * 8
+      card.style.transform = `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0)`
+    })
   })
 
   useParallax(onFrame)
@@ -71,6 +86,7 @@ export default function Founders() {
           {founders.map((f, i) => (
             <article
               key={f.name}
+              ref={(el) => (cardRefs.current[i] = el)}
               className="founder"
               style={{
                 '--accent': f.color,
